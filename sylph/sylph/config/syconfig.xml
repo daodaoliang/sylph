@@ -1,0 +1,18 @@
+<!--  
+  | sylph service wrapper config file 2016-03-09
+  | syconfig.xml
+  -->
+<sylph>
+    <service>
+        <config>
+            <service_name>SylphService</service_name>
+        </config>
+        <entry>
+            <!--process list-->
+            <process>
+                <command>cmd.exe </command>
+            </process>
+        </entry>
+    </service>
+</sylph>
+

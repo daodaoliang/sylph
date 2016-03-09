@@ -1,0 +1,26 @@
+HKCR
+{
+	sylph.1 = s 'SylphObject Class'
+	{
+		CLSID = s '{BF4D4CF8-A8E3-46FB-B52A-C746D72810AB}'
+	}
+	sylph = s 'SylphObject Class'
+	{		
+		CurVer = s 'sylph.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {BF4D4CF8-A8E3-46FB-B52A-C746D72810AB} = s 'SylphObject Class'
+		{
+			ProgID = s 'sylph.1'
+			VersionIndependentProgID = s 'sylph'
+			ForceRemove Programmable
+			LocalServer32 = s '%MODULE%'
+			{
+				val ServerExecutable = s '%MODULE_RAW%'
+			}
+			TypeLib = s '{8AA4CDF3-8DD4-49DC-A949-85B332FD02DC}'
+			Version = s '1.0'
+		}
+	}
+}
