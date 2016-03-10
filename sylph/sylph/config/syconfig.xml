@@ -1,11 +1,11 @@
 <!--  
-  | sylph service wrapper config file 2016-03-09
+  | sylph service wrapper config file 2016-03-10
   | syconfig.xml
   -->
 <sylph>
     <service>
         <config>
-            <service_name>SylphService</service_name>
+            <service_name>Sylph</service_name>
         </config>
         <entry>
             <!--process list-->

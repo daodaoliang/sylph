@@ -3,21 +3,19 @@
  * @brief    sylph precompile header 
  * @author   M.Horigome
  * @version  1.0.0.0000
- * @date     2016-03-07 
+ * @date     2016-03-10 
+ *
+ * https://github.com/horigome/sylph
  */
 #pragma once
 
-#ifndef STRICT
-#define STRICT
-#endif
-
 #include "targetver.h"
-#define _ATL_FREE_THREADED
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS
-#define ATL_NO_ASSERT_ON_DESTROY_NONEXISTENT_WINDOW
 
-#include "resource.h"
+#include <stdio.h>
+#include <tchar.h>
+#include <conio.h>
+
+#define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS
 #include <atlbase.h>
 #include <atlcom.h>
 #include <atlctl.h>

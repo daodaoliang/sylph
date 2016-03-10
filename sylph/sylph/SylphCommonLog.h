@@ -4,6 +4,8 @@
  * @author   M.Horigome
  * @version  1.0.0.0000
  * @date     2016-03-07 
+ *
+ * https://github.com/horigome/sylph
  */
 #pragma once
 #include <Windows.h>

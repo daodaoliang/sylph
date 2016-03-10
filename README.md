@@ -1,7 +1,8 @@
-# sylph Windows Service Wrapper
-Simple Windows Service Wrapper (for windows)
+# sylph (Windows Service Wrapper)
+Simple Windows Service Wrapper
 
 history.
+* 2016-03-10 : version 0.9.0.0 ... Rewrite to Win32.(Without ATL/COM)
 * 2016-03-09 : version 0.8.0.0 ... new
 
 
@@ -9,9 +10,12 @@ history.
 
 * Visual Studio 2013 - 2015
 
+VisualStudio Community
+https://www.microsoft.com/ja-jp/dev/products/community.aspx
+
 # Overview
 
-sylphは、Go言語等で作ったコンソールアプリケーションをWindows Service化するための Service Wrapperです。 
+sylphは、Go言語等で作ったコンソールアプリケーションをWindows Service化するための軽量な Service Wrapper です。 
 Go等は簡単にWebServiceが作れますが、Windows Serviceで動かしたいなと思い作りました。   
 
 sylphは、次のような特徴を持っています。
@@ -22,10 +26,10 @@ sylphは、次のような特徴を持っています。
 
 # How to build
 
-sylphは、ATL/COMを使った C++で書かれています。  
-ビルドするには、sylph.sln を開き、[Solution] - [rebuild] でビルドします。
+sylphは、Win32/C++で書かれています。  
+ビルドするには、sylph.sln を開き、[Build] - [Solution rebuild] でビルドします。
 
-# How To UseM
+# How To Use
 
 ## １、配置
 
@@ -71,11 +75,11 @@ process/command
 
 Install
 
-    $ sylph.exe /Service
+    $ sylph.exe /install
     
 Uninstall
 
-    $ sylph.exe /UnregServer
+    $ sylph.exe /uninstall
     
 
 サービスに登録する前に、コマンドで動作確認できます。
