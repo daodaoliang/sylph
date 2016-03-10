@@ -19,9 +19,9 @@ CAtlString  SERVICE_NAME        = TEXT("Sylph");
 SYCONFIGS   SYLPH_PROC_CONFIG;
 
 // Prototype ---
-VOID WINAPI ServiceMain ( DWORD argc, LPTSTR *argv );
 int         run_console ( void ); 
 HRESULT     load_config ( SYCONFIGS&, CAtlString&  service_name );
+VOID WINAPI ServiceMain ( DWORD argc, LPTSTR *argv );
 
 /**
  * @brief Sylph Service Modile class.
@@ -37,11 +37,13 @@ protected:
         for ( auto& conf : SYLPH_PROC_CONFIG ) 
             m_proc.AddProcessEntry( conf );
 
+        EVENT_INF(TEXT("Service  Started."));
         return S_OK; 
     }
 
     /** サービス停止時に呼ばれます。 */
     virtual void OnStop( void ) override {
+        EVENT_INF(TEXT("Service  Stoped."));
         m_proc.PurgeProcesses( );
         __super::OnStop( );
     }
