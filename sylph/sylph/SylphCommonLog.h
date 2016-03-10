@@ -10,15 +10,10 @@
 #pragma once
 #include <Windows.h>
 
-// * StdOut /
-#define _OUTPUT _tprintf_s      
-
-/**
- * @brief ログ関数
- * @param[in]  format_str ... printfスタイル
- */
+/** Trace */
+template <typename TFunc>
 inline void 
-_TRACE_F_( _In_ LPCTSTR format_s, ... )
+_TRACE_FT_( _In_ TFunc f, _In_ LPCTSTR format_s, ... )
 {
     TCHAR*      _msg_p =  NULL;
     va_list     _arg_list;
@@ -34,7 +29,7 @@ _TRACE_F_( _In_ LPCTSTR format_s, ... )
         ::ZeroMemory  ( _msg_p, _size );
         ::_vstprintf_s( _msg_p, _msg_len, format_s, _arg_list );
 
-        _OUTPUT( _msg_p );
+        f( _msg_p );
 
 _TRACEF_END:
         if ( _msg_p ) ::free( _msg_p );
@@ -42,6 +37,7 @@ _TRACEF_END:
     va_end( _arg_list );
 }
 
+/** Trace Header */
 inline CAtlString 
 _TRACE_HEAD( void ) {
     SYSTEMTIME _st;
@@ -52,6 +48,12 @@ _TRACE_HEAD( void ) {
         _st.wYear, _st.wMonth, _st.wDay, _st.wHour, _st.wMinute, _st.wSecond );
     return _s;
 }
+
+// std out
+#define _TRACE_F_( fmt, ...) _TRACE_FT_( [](LPTSTR msg) { ::_tprintf_s( msg ); }, fmt, __VA_ARGS__ )
+
+// DebugOut
+#define _TRACE_D_( fmt, ...) _TRACE_FT_( [](LPTSTR msg) { ::OutputDebugString( msg ); }, fmt, __VA_ARGS__ )
 
 // *
 // * Macro
@@ -67,5 +69,7 @@ _TRACE_HEAD( void ) {
     #define __UFUNC__ __FILE__
 #endif
 
-#define _STRACE( fmt, ...) _TRACE_F_( TEXT("[%s-(%04d)]: ") fmt, __UFILE__, __LINE__, __VA_ARGS__ )
 #define _SLOG( fmt, ...) _TRACE_F_( TEXT("%s") fmt, _TRACE_HEAD(), __VA_ARGS__ )
+#define _SDBG( fmt, ...) _TRACE_D_( TEXT("%s") fmt, _TRACE_HEAD(), __VA_ARGS__ )
+
+#define _STRACE( fmt, ...) _TRACE_F_( TEXT("[%s-(%04d)]: ") fmt, __UFILE__, __LINE__, __VA_ARGS__ )

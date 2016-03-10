@@ -189,6 +189,7 @@ int run_console( void ) {
     CAtlString _ver;
     _ver.LoadString( IDS_VERSION );
     _SLOG(TEXT("\n\n| Sylph Service Wrapper. \n| 2016 Version %s \n\n"), _ver );
+    _SDBG(TEXT("--- Sylph ver. %s\n"), _ver );
 
     // Run Processes.
     _SLOG( TEXT("* Service name > %s\n"), SERVICE_NAME);
