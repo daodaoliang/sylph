@@ -1,16 +1,23 @@
 <!--  
-  | sylph service wrapper config file 2016-03-09
+  | sylph service wrapper config file 2016-03-11
   | syconfig.xml
   -->
 <sylph>
     <service>
         <config>
-            <service_name>SylphService</service_name>
+            <service_name>Sylph</service_name>
+            <!-- start_type 
+                 | 2: AUTO START
+                 | 3: DEMAND START (Default)
+                 | 4: DISABLE
+                 | other : DEMAND_START
+              -->
+            <start_type>3</start_type>
         </config>
         <entry>
             <!--process list-->
             <process>
-                <command>cmd.exe </command>
+                <command>cmd.exe</command>
             </process>
         </entry>
     </service>

@@ -4,6 +4,8 @@
  * @author   M.Horigome
  * @version  1.0.0.0000
  * @date     2016-03-07 
+ *
+ * https://github.com/horigome/sylph
  */
 #pragma once
 #include <Windows.h>
@@ -12,40 +14,14 @@
 #include "msxml2.h"     // use MSXML
 #pragma comment (lib,"msxml2.lib")
 
-#include <io.h>
-#include <Fcntl.h>
-
 /**
- * @brief Consoleを作成する。
- * 
- * @retval ... console handle (error. NULL)
+ * @brief CoInitialize/CoUnInitializeをスコープ内で実施するクラス
  */
-inline
-int sy_create_console( void ) {
-
-    ::AllocConsole();
-
-    int _console_h = ::_open_osfhandle( 
-                (long)::GetStdHandle( STD_OUTPUT_HANDLE ), _O_TEXT );
-    if ( !_console_h ) {
-        return 0;
-    }
-
-    *stdout = *_fdopen( _console_h, "w" );
-    ::setvbuf( stdout, NULL, _IONBF, 0 );
-
-    return _console_h;
-}
-
-/**
- * @brief Console を削除する
- *
- * @param[in] console_handle ... 削除するコンソールハンドル
- */
-inline
-void sy_close_console( _In_ int console_handle ) {
-    ::_close( console_handle );
-}
+class CsyCoInitializer {
+public:
+    CsyCoInitializer ( void ) { ::CoInitialize( NULL ); }
+    ~CsyCoInitializer( void ) { ::CoUninitialize( );    }
+};
 
 /**
  * @brief Application実行パスを取得します。
