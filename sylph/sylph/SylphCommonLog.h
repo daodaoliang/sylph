@@ -26,7 +26,7 @@ _TRACE_HEAD( void ) {
 }
 
 /** 
- * @brief Trace Template Function
+ * @brief Trace Output Template Function
  */
 template <typename TFunc>
 inline void 

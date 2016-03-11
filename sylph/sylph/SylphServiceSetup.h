@@ -40,7 +40,11 @@ sy_sv_is_setup( _In_ LPCTSTR service_name ) {
 /**
  * @brief Serviceインストール
  *
- * @param[in] service_name ... サービス名
+ * @param[in] service_name ... Install ServiceName
+ * @param[in] start_type ... Service StartType.
+ *                      SERVICE_AUTO_START     0x00000002
+ *                      SERVICE_DEMAND_START   0x00000003 (default)
+ *                      SERVICE_DISABLED       0x00000004
  */
 inline HRESULT 
 sy_sv_install( _In_ LPCTSTR service_name,

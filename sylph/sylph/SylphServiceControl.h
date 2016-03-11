@@ -58,6 +58,7 @@ public:
      */
     HRESULT WaitForCompleation( void ) {
 
+        EVENT_DBG( TEXT("ServiceMain Begin") );
         // ==> サービスハンドラ関数の登録 ※Context : this pointer 
         m_StatusHandle = ::RegisterServiceCtrlHandlerEx ( 
                                     GetServiceName( ), 
@@ -73,7 +74,8 @@ public:
         m_ServiceStatus.dwCheckPoint                = 0;
 
         if ( !::SetServiceStatus ( m_StatusHandle, &m_ServiceStatus )) {
-            //
+            EVENT_WAR( TEXT("[START_PENDING] SetServiceStatus Failed. %d"), 
+                ::GetLastError() );
         }
 
         //
@@ -85,7 +87,8 @@ public:
         m_ServiceStatus.dwCheckPoint        = 0;                    // 0
 
         if ( !::SetServiceStatus ( m_StatusHandle, &m_ServiceStatus ) ) {
-            //
+            EVENT_WAR( TEXT("[RUNNING] SetServiceStatus Failed. %d"), 
+                ::GetLastError() );
         }
 
         m_ServiceStopEvent = ::CreateEvent ( NULL, TRUE, FALSE, NULL );
@@ -105,9 +108,11 @@ public:
         m_ServiceStatus.dwCheckPoint        = 3;                    // 3
 
         if ( !::SetServiceStatus ( m_StatusHandle, &m_ServiceStatus ) ) {
-            //
+            EVENT_WAR( TEXT("[STOPED] SetServiceStatus Failed. %d"), 
+                ::GetLastError() );
         }
 
+        EVENT_DBG( TEXT("ServiceMain Exit") );
         return S_OK;
     }
 
@@ -117,7 +122,7 @@ private:
     virtual DWORD run( _In_ void* argment  ) override {
         switch( ::WaitForSingleObject( this->m_ServiceStopEvent, INFINITE ) ) {
         case WAIT_OBJECT_0 + 0:
-            ::OutputDebugString( TEXT("---Break!!\n") );
+            _SDBG( TEXT("Service Thread break.\n") );
             return 0;
         default:
             break;
@@ -136,7 +141,7 @@ private:
 
         auto _service_p = reinterpret_cast<CsyServiceControl*>( context_p );
         if ( !_service_p ) {
-            ::OutputDebugString( TEXT("!!!---NULL Pointer !\n") );
+            EVENT_ERR( TEXT("ServiceCtrlHandler Context is NULL.") ); 
             return ERROR_INVALID_ADDRESS;
         }
 
@@ -156,7 +161,8 @@ private:
                 _s->dwCheckPoint        = 4;                        // 4?
 
                 if ( !::SetServiceStatus ( _service_p->m_StatusHandle, _s ) ) {
-                    //
+                    EVENT_WAR( TEXT("[STOP_PENDING] SetServiceStatus Failed. %d"), 
+                        ::GetLastError() );
                 }
             }
 

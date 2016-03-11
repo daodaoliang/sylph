@@ -16,9 +16,12 @@
 class CsyProcConfig {
 public:
     CAtlString m_commandline;
+    UINT       m_max_retry;
 public:
-    CsyProcConfig( _In_ LPCTSTR commandline = NULL ) 
-        : m_commandline( commandline ) { }
+    CsyProcConfig( _In_ LPCTSTR commandline = NULL,
+                   _In_ UINT    max_retry   = 0 ) 
+        : m_commandline( commandline ),
+          m_max_retry  ( max_retry   ) { }
 
     ~CsyProcConfig( void ) = default;
         

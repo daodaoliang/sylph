@@ -20,7 +20,7 @@ SYCONFIGS   SYLPH_PROC_CONFIG;
 
 // Prototype ---
 int         run_console ( void ); 
-HRESULT     load_config ( SYCONFIGS&, CAtlString&  service_name );
+HRESULT     load_config ( SYCONFIGS&, CAtlString&  service_name, DWORD& start_type );
 VOID WINAPI ServiceMain ( DWORD argc, LPTSTR *argv );
 
 /**
@@ -77,7 +77,9 @@ int _tmain( _In_ int        argc,
 
     CsyCoInitializer _USE_COM;
 
-    HRESULT _hr = load_config( SYLPH_PROC_CONFIG, SERVICE_NAME );
+
+    DWORD _start_type = SERVICE_DEMAND_START;
+    HRESULT _hr = load_config( SYLPH_PROC_CONFIG, SERVICE_NAME, _start_type );
     if ( FAILED( _hr ) ) {
         _SLOG( TEXT("[ERR] Load configfile failed. in %08x\n"),_hr );
         return _hr;
@@ -88,7 +90,7 @@ int _tmain( _In_ int        argc,
     //
     if ( argc >= 2 ) {
         if ( ::_tcscmp( TEXT("/install"), argv[1] ) == 0 ) {
-            BOOL _ret = sy_sv_install( SERVICE_NAME )  ;
+            BOOL _ret = sy_sv_install( SERVICE_NAME, _start_type )  ;
             _SLOG( TEXT("Service Install. %d.\n"), _ret );
             return _ret;
         }
@@ -144,7 +146,8 @@ VOID WINAPI ServiceMain ( _In_ DWORD   argc,
  * @brief syconfig.xmlを読み込む（プロセス起動定義）
  */
 HRESULT load_config( _Out_ SYCONFIGS&   configs, 
-                     _Out_ CAtlString&  service_name ) {
+                     _Out_ CAtlString&  service_name,
+                     _Out_ DWORD&       start_type ) {
 
     HRESULT _hr = S_OK;
     ::CoInitialize( NULL );
@@ -155,14 +158,35 @@ HRESULT load_config( _Out_ SYCONFIGS&   configs,
         if ( _hr == S_OK ) {
 
             // parse.
+
             // ==> <sylph><service><config> ...  
             {
-                CComPtr<IXMLDOMNode> _node_p;
-                if ( _xml->get_lastChild( &_node_p ) == S_OK ) {
+                // service_name
+                CComPtr<IXMLDOMNode> _sv_name_p;
+                if ( _xml->get_lastChild( &_sv_name_p ) == S_OK ) {
                     service_name = sy_xml_get_nodetext( 
-                        _node_p, TEXT("/sylph/service/config/service_name") );
+                        _sv_name_p, TEXT("/sylph/service/config/service_name") );
                 }
                 if ( service_name.IsEmpty() ) service_name = TEXT("SylphService");
+
+                CComPtr<IXMLDOMNode> _start_type_p;
+                if ( _xml->get_lastChild( &_start_type_p ) == S_OK ) {
+
+                    CAtlString _st_type_str = sy_xml_get_nodetext( 
+                        _sv_name_p, TEXT("/sylph/service/config/start_type") );
+
+                    start_type = ::_ttoi( _st_type_str );
+                    switch ( start_type ) {
+                    case SERVICE_AUTO_START:
+                    case SERVICE_DEMAND_START:
+                    case SERVICE_DISABLED:
+                        break;
+                    default:
+                        start_type = SERVICE_DEMAND_START; 
+                    }
+                } else {
+                    start_type = SERVICE_DEMAND_START; 
+                }
             }
 
             // ==> <sylph><service><entry>...</entry></service></service>
