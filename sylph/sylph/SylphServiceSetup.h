@@ -143,7 +143,7 @@ sy_sv_uninstall( _In_ LPCTSTR service_name ) {
                && _status.dwCurrentState == SERVICE_STOP_PENDING))) {
 
             // PENDING..
-            MessageBox( NULL, TEXT("Pending."), NULL, MB_OK );
+            MessageBox( NULL, TEXT("Pending. waiting"), NULL, MB_OK );
         }
     }
 

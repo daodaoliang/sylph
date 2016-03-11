@@ -16,7 +16,7 @@
 class CsyProcConfig {
 public:
     CAtlString m_commandline;
-    UINT       m_max_retry;
+    UINT       m_max_retry;      // not impl.
 public:
     CsyProcConfig( _In_ LPCTSTR commandline = NULL,
                    _In_ UINT    max_retry   = 0 ) 
@@ -40,9 +40,10 @@ class CsyProcess : public CsyThread {
     HANDLE              m_event;        ///< end trigger
     PROCESS_INFORMATION m_proc_info;    ///< process information
     CsyProcConfig       m_config;
+    HRESULT             m_status;
 public:
     /** constructor */
-    CsyProcess( void ) : m_event( NULL ) {
+    CsyProcess( void ) : m_event( INVALID_HANDLE_VALUE ) {
         ::ZeroMemory( &m_proc_info, sizeof(m_proc_info) ); 
     }
 
@@ -82,10 +83,44 @@ public:
      * @brief Start Process
      */
     HRESULT Start( _In_ const CsyProcConfig& config ) { 
+
+        HRESULT _hr           = S_OK;
+        HANDLE  _idle_trigger = INVALID_HANDLE_VALUE;
+
         this->Stop();
-        m_event = ::CreateEvent( NULL, NULL, FALSE, NULL );
+
         m_config = config;
-        return CsyThread::Begin( );    
+        m_event = ::CreateEvent( NULL, TRUE, FALSE, NULL );
+        if ( m_event == INVALID_HANDLE_VALUE )  {
+            _hr = HRESULT_FROM_WIN32( ::GetLastError() );
+            goto START_EXIT;
+        }
+
+        // スレッド起動先で、プロセス起動が完了するまで待ち合わせる
+        // ※同期しないと、スレッド関数内でプロセスが正常に起動したか分からない
+        _idle_trigger = ::CreateEvent( NULL, TRUE, FALSE, NULL );
+        if ( _idle_trigger == INVALID_HANDLE_VALUE ) {
+            _hr = HRESULT_FROM_WIN32( ::GetLastError() );
+            goto START_EXIT;
+        }
+
+        if ( FAILED((_hr = CsyThread::Begin( &_idle_trigger ) )) ) {
+            goto START_EXIT;
+        }
+
+        sy_single_join( _idle_trigger );
+        if ( FAILED( m_status ) ) goto START_EXIT;
+
+        return S_OK;
+
+    START_EXIT:
+        if ( m_event != INVALID_HANDLE_VALUE ) 
+            ::CloseHandle( m_event ); 
+        if ( _idle_trigger != INVALID_HANDLE_VALUE ) 
+            ::CloseHandle( _idle_trigger ); 
+
+        m_event = INVALID_HANDLE_VALUE;
+        return _hr;
     }
 
     /**
@@ -99,7 +134,7 @@ public:
 
             ::CloseHandle( m_event );
         }
-        m_event = NULL;
+        m_event = INVALID_HANDLE_VALUE;
     }
 
 protected:
@@ -108,14 +143,21 @@ protected:
      */
     virtual DWORD run( _In_ void* argment = NULL ) override {
 
+        // receive event trigger from Begin()
+        HANDLE *_idle_trigger_p = (HANDLE*)argment;
+        ATLASSERT( _idle_trigger_p );
+
         _SLOG( TEXT("==> Start > %s\n"), m_config.m_commandline );
         HRESULT _h = sy_create_process( m_config.m_commandline, m_proc_info ); 
         if ( FAILED( _h ) ) {
             _SLOG( TEXT("! Process Start Failed. in %08x\n"), _h );
+            m_status = _h;
+            ::SetEvent( *_idle_trigger_p ); 
             return 1;   // process create failed.
         }
 
-        _SLOG( TEXT("==> [%d] Process Started.\n"), m_proc_info.dwProcessId );
+        _SLOG( TEXT("==> [PID:%d] Process Started.\n"), m_proc_info.dwProcessId );
+        ::SetEvent( *_idle_trigger_p ); 
 
         HANDLE _events[2] = {
             m_proc_info.hProcess,
@@ -135,7 +177,7 @@ protected:
         default:
             if ( ::GetExitCodeProcess( m_proc_info.hProcess, &_exit_code ) )
                 if ( _exit_code == STILL_ACTIVE ) {
-                    _SLOG( TEXT("==> [%d] KILL Process \n"), m_proc_info.dwProcessId );
+                    _SLOG( TEXT("==> [PID:%d] KILL Process \n"), m_proc_info.dwProcessId );
                     ::TerminateProcess( m_proc_info.hProcess, 0L );
                 }
             }
@@ -145,7 +187,7 @@ protected:
         if ( m_proc_info.hProcess ) 
             ::CloseHandle( m_proc_info.hProcess );
 
-        _SLOG( TEXT("==> [%d] Process exit : code %d\n"), 
+        _SLOG( TEXT("==> [PID:%d] Process exit : code %d\n"), 
                             m_proc_info.dwProcessId, _exit_code );
         ::ZeroMemory( &m_proc_info, sizeof( m_proc_info ) );
 
@@ -184,6 +226,7 @@ public:
         }
         
         m_processes.push_back( _p );
+        _SLOG(TEXT("==> [PID:%d] Add ProcessEntry \n"), _p->IsProcessID( ) );
         return S_OK;
     }
 
@@ -202,6 +245,9 @@ public:
         m_processes.clear();
     }
 
+    /**
+     * @brief process list を列挙します
+     */
     void ForEach( std::function<void(CsyProcess*)> func ) {
         std::for_each( m_processes.begin(), m_processes.end  (), func );
     }

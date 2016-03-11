@@ -82,9 +82,9 @@ public:
         // ==> サービス開始（Event objectを使い、Threadを待機します）
         //
         m_ServiceStatus.dwControlsAccepted  = SERVICE_ACCEPT_STOP;
-        m_ServiceStatus.dwCurrentState      = SERVICE_RUNNING;      // RUNNING
+        m_ServiceStatus.dwCurrentState      = SERVICE_RUNNING; // RUNNING
         m_ServiceStatus.dwWin32ExitCode     = 0;
-        m_ServiceStatus.dwCheckPoint        = 0;                    // 0
+        m_ServiceStatus.dwCheckPoint        = 0;
 
         if ( !::SetServiceStatus ( m_StatusHandle, &m_ServiceStatus ) ) {
             EVENT_WAR( TEXT("[RUNNING] SetServiceStatus Failed. %d"), 
@@ -94,18 +94,33 @@ public:
         m_ServiceStopEvent = ::CreateEvent ( NULL, TRUE, FALSE, NULL );
         ATLASSERT( m_ServiceStopEvent != INVALID_HANDLE_VALUE ); 
 
-        this->OnStart( );
-        this->Begin  ( NULL );
-        this->Join   (  );
+        try {
+            ATLENSURE_SUCCEEDED( this->OnStart( )     ); // Call Start Handler
+            ATLENSURE_SUCCEEDED( this->Begin  ( NULL )); // Start ServiceThread
+            this->Join   (  );
 
-        ::CloseHandle ( m_ServiceStopEvent );
-        m_ServiceStopEvent = NULL;
+            if ( m_ServiceStopEvent ) ::CloseHandle ( m_ServiceStopEvent );
+            m_ServiceStopEvent = NULL;
+
+        } catch ( CAtlException& e ) {
+
+            EVENT_ERR( TEXT("Process Start Failed. 0x%08x"), e.m_hr );
+            m_ServiceStatus.dwControlsAccepted = 0;
+            m_ServiceStatus.dwCurrentState     = SERVICE_STOP_PENDING;
+            m_ServiceStatus.dwWin32ExitCode    = 0;
+            m_ServiceStatus.dwCheckPoint       = 4;
+
+            if ( !::SetServiceStatus ( m_StatusHandle, &m_ServiceStatus ) ) {
+                EVENT_WAR( TEXT("[STOP_PENDING] SetServiceStatus Failed. %d"), 
+                    ::GetLastError() );
+            }
+        }
 
         // ==> 停止後、サービスの状態を停止に遷移させる
         m_ServiceStatus.dwControlsAccepted  = 0;
-        m_ServiceStatus.dwCurrentState      = SERVICE_STOPPED;      // STOPED
+        m_ServiceStatus.dwCurrentState      = SERVICE_STOPPED; // STOPED
         m_ServiceStatus.dwWin32ExitCode     = 0;
-        m_ServiceStatus.dwCheckPoint        = 3;                    // 3
+        m_ServiceStatus.dwCheckPoint        = 3;
 
         if ( !::SetServiceStatus ( m_StatusHandle, &m_ServiceStatus ) ) {
             EVENT_WAR( TEXT("[STOPED] SetServiceStatus Failed. %d"), 

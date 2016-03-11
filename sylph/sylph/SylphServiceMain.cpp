@@ -34,8 +34,14 @@ protected:
     /** サービス開始時に呼ばれます。 */
     virtual HRESULT OnStart( void ) override { 
 
+        HRESULT _hr = S_OK;
         for ( auto& conf : SYLPH_PROC_CONFIG ) 
-            m_proc.AddProcessEntry( conf );
+            if( FAILED(_hr = m_proc.AddProcessEntry( conf )) ) break;
+
+        if ( FAILED( _hr ) ) {
+            EVENT_ERR(TEXT("Service AddProcessEntry failed. 0x%08d"), _hr);
+            return _hr;
+        }
 
         EVENT_INF(TEXT("Service  Started."));
         return S_OK; 
@@ -144,6 +150,10 @@ VOID WINAPI ServiceMain ( _In_ DWORD   argc,
 
 /**
  * @brief syconfig.xmlを読み込む（プロセス起動定義）
+ *
+ * @brief[out] configs ... プロセス毎の設定リスト
+ * @brief[out] service_name ... Service Name
+ * @brief[out] start_type ... Service StartType(use Install)
  */
 HRESULT load_config( _Out_ SYCONFIGS&   configs, 
                      _Out_ CAtlString&  service_name,
@@ -159,9 +169,9 @@ HRESULT load_config( _Out_ SYCONFIGS&   configs,
 
             // parse.
 
-            // ==> <sylph><service><config> ...  
+            // ==> <sylph><service><config> ... </config>
             {
-                // service_name
+                // <service_name>
                 CComPtr<IXMLDOMNode> _sv_name_p;
                 if ( _xml->get_lastChild( &_sv_name_p ) == S_OK ) {
                     service_name = sy_xml_get_nodetext( 
@@ -169,6 +179,7 @@ HRESULT load_config( _Out_ SYCONFIGS&   configs,
                 }
                 if ( service_name.IsEmpty() ) service_name = TEXT("SylphService");
 
+                // <start_type>
                 CComPtr<IXMLDOMNode> _start_type_p;
                 if ( _xml->get_lastChild( &_start_type_p ) == S_OK ) {
 
@@ -182,10 +193,10 @@ HRESULT load_config( _Out_ SYCONFIGS&   configs,
                     case SERVICE_DISABLED:
                         break;
                     default:
-                        start_type = SERVICE_DEMAND_START; 
+                        start_type = SERVICE_DEMAND_START;  // Unknown value.
                     }
                 } else {
-                    start_type = SERVICE_DEMAND_START; 
+                    start_type = SERVICE_DEMAND_START;      // no tag
                 }
             }
 
@@ -218,10 +229,16 @@ int run_console( void ) {
     _SDBG(TEXT("--- Sylph ver. %s\n"), _ver );
 
     // Run Processes.
+    HRESULT _hr = S_OK;
     _SLOG( TEXT("* Service name > %s\n"), SERVICE_NAME);
     _SLOG( TEXT("* Start Pricesses.\n"));
     CsylphProcessManager    _proc;
-    for ( auto& conf : SYLPH_PROC_CONFIG ) _proc.AddProcessEntry( conf );
+    for ( auto& conf : SYLPH_PROC_CONFIG )
+        if( FAILED(_hr = _proc.AddProcessEntry( conf )) ) break;
+
+    if ( FAILED( _hr ) ) {
+        _SLOG( TEXT("[ERR] AddProcessEntry failed. %08x\n") ); 
+    }
 
     _SLOG( TEXT("\n\n| please type any key.\n\n\n") );
     ::_getch();
