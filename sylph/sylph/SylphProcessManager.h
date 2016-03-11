@@ -86,11 +86,11 @@ public:
 
         HRESULT _hr           = S_OK;
         HANDLE  _idle_trigger = INVALID_HANDLE_VALUE;
-
         this->Stop();
 
+        // Thread StopEvent
         m_config = config;
-        m_event = ::CreateEvent( NULL, TRUE, FALSE, NULL );
+        m_event  = ::CreateEvent( NULL, TRUE, FALSE, NULL );
         if ( m_event == INVALID_HANDLE_VALUE )  {
             _hr = HRESULT_FROM_WIN32( ::GetLastError() );
             goto START_EXIT;
@@ -111,7 +111,9 @@ public:
         sy_single_join( _idle_trigger );
         if ( FAILED( m_status ) ) goto START_EXIT;
 
+        ::CloseHandle( _idle_trigger ); 
         return S_OK;
+
 
     START_EXIT:
         if ( m_event != INVALID_HANDLE_VALUE ) 
@@ -127,14 +129,14 @@ public:
      * @brief Stop Process
      */
     void Stop( void ) {
-        if ( m_event ) {
+        if ( m_event  != INVALID_HANDLE_VALUE ) {
             // wait for completion..
             ::SetEvent( m_event );
             CsyThread::Join();
 
             ::CloseHandle( m_event );
+            m_event = INVALID_HANDLE_VALUE;
         }
-        m_event = INVALID_HANDLE_VALUE;
     }
 
 protected:
